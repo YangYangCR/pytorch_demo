@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch import Tensor
 
 
 class TransformerModel(nn.Module):
@@ -17,8 +18,34 @@ class TransformerModel(nn.Module):
         self.transformer = nn.Transformer(d_model=model_dim, nhead=num_heads, num_encoder_layers=num_layers)
         self.fc = nn.Linear(model_dim, output_dim)
 
-    def forward(self, src, tgt):
+    # src 10 * 32 tgt 10 * 32
+    def forward(self, src: Tensor, tgt: Tensor):
+        # 获取第二个维度
         src_seq_length, tgt_seq_length = src.size(1), tgt.size(1)
+        """
+            假设 embedding [
+              1,1,1
+              2,2,2
+              3,3,3
+            ]
+            src = [
+              2,1
+              1,3
+            ]
+            embedding(src) 为 [
+                [
+                   [2,2,2]
+                   [1,1,1] 
+                ],
+                [
+                    [1,1,1]
+                    [3,3,3]
+                ]
+            ]
+            
+            positional_encoding的size为a * b * c  
+            positional_encoding[:, :src_seq_length, :]  取a维度的所有数据 b的前src_seq_length维数据，c的所有维数据
+        """
         src = self.embedding(src) + self.positional_encoding[:, :src_seq_length, :]
         tgt = self.embedding(tgt) + self.positional_encoding[:, :tgt_seq_length, :]
         transformer_output = self.transformer(src, tgt)
@@ -44,6 +71,10 @@ tgt = torch.randint(0, input_dim, (20, 32))  # (序列长度, 批量大小) 10*3
 
 # 前向传播
 output = model(src, tgt)
+print(f"model param is ")
+for param in model.parameters():
+    print(f"param shape is {param.shape}")
+print(f"out put shape is {output.shape}")
 
 # 计算损失
 loss = criterion(output.view(-1, output_dim), tgt.view(-1))
@@ -54,3 +85,14 @@ loss.backward()
 optimizer.step()
 
 print("Loss:", loss.item())
+
+# 模型保存
+torch.save(model.state_dict(), "./ch2_nn_transformer.pth")
+
+# 加载模型
+model = TransformerModel()
+model.load_state_dict(torch.load("./ch2_nn_transformer.pth"))
+
+# 切换推理模型
+model.eval()
+

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # 数据集：字符序列预测（Hello -> Elloh）
-char_set = list("hellooo")
+char_set = list("hello")
 char_to_idx = {c: i for i, c in enumerate(char_set)}
 idx_to_char = {i: c for i, c in enumerate(char_set)}
 
@@ -15,7 +15,7 @@ target_str = "elloh"
 input_data = [char_to_idx[c] for c in input_str]
 target_data = [char_to_idx[c] for c in target_str]
 
-# 转换为独热编码
+# 转换为独热编码  按照 input_data中的索引从np.eye(len(char_set))取多行，组成新的矩阵
 input_one_hot = np.eye(len(char_set))[input_data]
 
 # 转换为 PyTorch Tensor
